@@ -1,0 +1,33 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31611.283
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lumine8-App", "lumine8-App\lumine8-App.csproj", "{003A13A0-006D-45E4-B008-BD72ECD9CF4A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "lumine8-webassembly.Shared", "..\lumine8-webassembly\lumine8-webassembly\Shared\lumine8-webassembly.Shared.csproj", "{FC1550A0-6418-437E-BED0-044D76268487}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{003A13A0-006D-45E4-B008-BD72ECD9CF4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{003A13A0-006D-45E4-B008-BD72ECD9CF4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{003A13A0-006D-45E4-B008-BD72ECD9CF4A}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{003A13A0-006D-45E4-B008-BD72ECD9CF4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{003A13A0-006D-45E4-B008-BD72ECD9CF4A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{003A13A0-006D-45E4-B008-BD72ECD9CF4A}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{FC1550A0-6418-437E-BED0-044D76268487}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC1550A0-6418-437E-BED0-044D76268487}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC1550A0-6418-437E-BED0-044D76268487}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC1550A0-6418-437E-BED0-044D76268487}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5FAB4433-CCE2-4302-8AE6-CE275CFE8D48}
+		        SolutionGuid = {61F7FB11-1E47-470C-91E2-47F8143E1572}
+	EndGlobalSection
+EndGlobal
