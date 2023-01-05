@@ -53,17 +53,14 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="7.0.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="7.0.1" />
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="7.0.1" PrivateAssets="all" />
-		<PackageReference Include="Nethereum.HdWallet" Version="4.12.0" />
-		<PackageReference Include="Nethereum.Web3" Version="4.12.0" />
 		<PackageReference Include="Grpc.Tools" Version="2.51.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Grpc.Net.Client.Web" Version="2.51.0" />
 		<PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="7.0.1" />
-		<PackageReference Include="NBitcoin" Version="7.0.23" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
-		<PackageReference Include="Radzen.Blazor" Version="4.4.7" />
+		<PackageReference Include="Radzen.Blazor" Version="4.4.8" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.1">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -71,7 +68,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\lumine8-webassembly\lumine8-webassembly\Shared\lumine8-webassembly.Shared.csproj" />
+      <ProjectReference Include="..\lumine8-App.Shared\lumine8-App.Shared.csproj" />
     </ItemGroup>
 
 </Project>

@@ -43,27 +43,10 @@
         }
     </style>
 }
+
 @if (render)
 {
     <div class="mx-auto" style="max-width: 480px;" id="m">
-        @if (n == 0)
-        {
-            <h3>Crypto Standards</h3>
-            <p>Lumine8 has two ways to authenticate you. One way is to use a 24 word mnemonic with a password, and the other way is to use your private key.</p>
-            <p>It is strongly recommended that you don't clear cache nor cookies for this site. The site stores your mnemonic and private key in local storage. Please write both down just to be safe.</p>
-            <p>If you want to use multiple devices for one user, you must setup your account for each device using one of the two authentication options. Lumine8 cannot use your username and password as an authentication method because cypto requires the private key. Your mnemonic and password generates the private key.</p>
-
-            <details class="mb-5">
-                <summary>Mnemonic and private key are hidden by default</summary>
-                <div>
-                    <p>Mnemonic: @authService.loginUser.Mnemonic</p>
-                    <p>Private Key: @authService.loginUser.PrivateKey</p>
-                </div>
-            </details>
-
-            <input @onclick="() => { n = 1; }" type="button" class="btn btn-success-fill d-block mx-auto" value="Next" />
-        }
-
         @if (n == 1)
         {
             <p>You can skip this process. Click <a href="/u/@model.SignedInUser.Username">here</a> to go to your profile page or click next to continue</p>
@@ -72,7 +55,6 @@
             <br />
             <p>Note: To go back to the introduction page, enter <q>https://lumine8.com/introduction</q> in the address bar</p>
 
-            <input @onclick="() => { n = 0; }" type="button" class="btn btn-danger-fill ms-auto me-1" value="Back" />
             <input @onclick="() => { n = 2; }" type="button" class="btn btn-info-fill me-auto ms-1" value="Next" />
         }
 
@@ -282,7 +264,7 @@
     private string uploadString, ppUploadString;
     private List<IBrowserFile> file = new List<IBrowserFile>(), ppFile = new List<IBrowserFile>();
 
-    private int n = 0;
+    private int n = 1;
 
     private IntroductionPageModel model = new();
 
@@ -294,6 +276,8 @@
         {
             if (!Http.DefaultRequestHeaders.Contains("Username"))
                 Http.DefaultRequestHeaders.Add("Username", authService.loginUser.Username);
+            if (!Http.DefaultRequestHeaders.Contains("Password"))
+                Http.DefaultRequestHeaders.Add("Password", authService.loginUser.Password);
             if (!Http.DefaultRequestHeaders.Contains("PrivateKey"))
                 Http.DefaultRequestHeaders.Add("PrivateKey", authService.loginUser.PrivateKey);
         }

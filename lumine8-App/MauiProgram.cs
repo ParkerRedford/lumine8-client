@@ -48,7 +48,7 @@ public static class MauiProgram
         builder.Services.AddSingleton(services =>
         {
             var httpClient = new HttpClient(new GrpcWebHandler(GrpcWebMode.GrpcWeb, new HttpClientHandler()));
-            var channel = GrpcChannel.ForAddress("https://lumine8.com", new GrpcChannelOptions { HttpClient = httpClient });
+            var channel = GrpcChannel.ForAddress(sv.uri, new GrpcChannelOptions { HttpClient = httpClient });
 
             return new MainProtoClient(channel);
         });

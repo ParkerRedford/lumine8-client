@@ -287,7 +287,7 @@ else if (colorMode == ColorModeEnum.Dark)
                 {
                     foreach (var c in chats)
                     {
-                        <lumine8_maui.Pages.Profile.ChatPerson UserId="@c" Close="CloseChat" signedInUser="model.SignedInUser"></lumine8_maui.Pages.Profile.ChatPerson>
+                        <lumine8_App.Pages.Profile.ChatPerson UserId="@c" Close="CloseChat" signedInUser="model.SignedInUser" chatHub="chatHub"></lumine8_App.Pages.Profile.ChatPerson>
                         async Task CloseChat()
                         {
                             chats.Remove(c);
@@ -415,12 +415,12 @@ else if (colorMode == ColorModeEnum.Dark)
         if (variables.isDesktop && authService.isAuthenticated)
         {
             chatHub = new HubConnectionBuilder()
-        .WithAutomaticReconnect()
-    .WithUrl(navigationManager.ToAbsoluteUri($"{variables.uri}/chathub"))
-        .Build();
+            .WithAutomaticReconnect()
+            .WithUrl(navigationManager.ToAbsoluteUri($"{variables.uri}/chathub"))
+            .Build();
 
-            await chatHub.StartAsync();
             await notifyHub.StartAsync();
+            await chatHub.StartAsync();
         }
 
         if (authService.isAuthenticated)
@@ -429,7 +429,11 @@ else if (colorMode == ColorModeEnum.Dark)
 
             lfriends = model.Friends.AsQueryable();
 
-            chatRoomUser = Path.Combine(chatRoomsPath, authService.loginUser.Username, "UserRoom.json");
+            var userRoom = Path.Combine(chatRoomsPath, authService.loginUser.Username, "UserRoom.json");
+            if(!File.Exists(userRoom))
+                using (FileStream fs = File.Create(userRoom)) { }
+
+            chatRoomUser = userRoom;
             var lChats = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(chatRoomUser));
             if (lChats != null)
                 chats = lChats;
@@ -636,8 +640,9 @@ else if (colorMode == ColorModeEnum.Dark)
 
                     await JSRuntime.InvokeVoidAsync("setChatWidth", chatsRef, friendsRef);
                 });
+            }
 
-                notifyHub.On<Request, lumine8_GrpcService.ProfilePicture, SharedUser, Image>("FriendRequestSent", (req, pp, u, img) =>
+            notifyHub.On<Request, lumine8_GrpcService.ProfilePicture, SharedUser, Image>("FriendRequestSent", (req, pp, u, img) =>
                 {
                     model.SuRequests.Add(u);
                     if (pp != null)
@@ -648,17 +653,16 @@ else if (colorMode == ColorModeEnum.Dark)
                     StateHasChanged();
                 });
 
-                notifyHub.On<GroupRequest, GroupModel, GroupProfilePicture, GroupImage>("GroupRequestSent", (req, g, pp, gimg) =>
-                {
-                    model.GroupRequests.Add(req);
-                    model.Groups.Add(g);
-                    if (pp != null)
-                        model.GroupProfilePictureRequests.Add(pp);
-                    if (gimg != null)
-                        model.GroupImages.Add(gimg);
-                    StateHasChanged();
-                });
-            }
+            notifyHub.On<GroupRequest, GroupModel, GroupProfilePicture, GroupImage>("GroupRequestSent", (req, g, pp, gimg) =>
+            {
+                model.GroupRequests.Add(req);
+                model.Groups.Add(g);
+                if (pp != null)
+                    model.GroupProfilePictureRequests.Add(pp);
+                if (gimg != null)
+                    model.GroupImages.Add(gimg);
+                StateHasChanged();
+            });
         }
     }
 

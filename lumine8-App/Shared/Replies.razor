@@ -1,11 +1,8 @@
-﻿@using Microsoft.AspNetCore.SignalR.Client
-
-@inject MainProto.MainProtoClient MainClient
+﻿@inject MainProto.MainProtoClient MainClient
 @inject NavigationManager navigationManager
 @inject AuthenticationService authService
 
 @inject SingletonVariables variables
-@inject SignalRSingleton signalr
 @implements IDisposable
 
 <style>
@@ -42,7 +39,7 @@
                                 {
                                     model.Like = new Like { MessageId = message.MessageId, UserId = signedInUser.Id };
 
-                                    await signalr.hub.SendAsync("Like", model.Like);
+                                    await hub.SendAsync("Like", model.Like);
                                 }
                             }
                             else
@@ -53,7 +50,7 @@
                                 </button>
                                 void UnLike()
                                 {
-                                    signalr.hub.SendAsync("UnLike", model.Like);
+                                    hub.SendAsync("UnLike", model.Like);
                                     model.Like = null;
                                 }
                             }
@@ -65,15 +62,17 @@
                                 <RadzenIcon Icon="edit" Style="display: flex !important;"></RadzenIcon>
                             </button>
 
-                            <EditForm Model="message" OnValidSubmit="DeleteMessage" style="background-color: initial;">
+                            <EditForm Model="message" OnValidSubmit="Delete" style="background-color: initial;">
                                 <button class="btn m-auto" style="padding: 0.3rem 0.5rem;" type="submit">
                                     <RadzenIcon Icon="delete" Style="display: flex !important;" />
                                 </button>
                             </EditForm>
 
-                            async Task DeleteMessage()
+                            async Task Delete()
                             {
-                                await signalr.hub.SendAsync("RemoveReply", message);
+                                await hub.SendAsync("DeleteReply", message);
+                                await DeleteEvent.InvokeAsync();
+                                await RecurseDelete.InvokeAsync();
                             }
                         }
                     </div>
@@ -136,7 +135,7 @@
 
             async Task Edit()
             {
-                await signalr.hub.SendAsync("SaveEdit", message);
+                await hub.SendAsync("SaveEdit", message);
                 dEdit = false;
             }
         }
@@ -187,20 +186,20 @@
             <div class="pl-1" style="border-left: 1px solid black;">
                 @foreach (var m in model.Messages.OrderBy(x => x.Date))
                 {
-                    <Replies message="m" isAuthenticated="isAuthenticated" signedInUser="signedInUser" RecurseDelete="Delete" DeleteEvent="DeleteE" RemoveLike="RemoveLike"></Replies>
+                    <Replies hub="hub" message="m" isAuthenticated="isAuthenticated" signedInUser="signedInUser" RecurseDelete="Delete" DeleteEvent="DeleteE" RemoveLike="RemoveLike"></Replies>
 
                     async Task Delete()
                     {
                         model.Messages.Remove(m);
-                        StateHasChanged();
-                        await signalr.hub.SendAsync("RemoveReply", m);
+                        await InvokeAsync(StateHasChanged);
+                        await hub.SendAsync("DeleteReply", m);
                     }
 
                     async Task DeleteE()
                     {
                         model.Messages.Remove(m);
-                        StateHasChanged();
-                        await signalr.hub.SendAsync("RemoveReply", m);
+                        await InvokeAsync(StateHasChanged);
+                        await hub.SendAsync("DeleteReply", m);
                     }
                 }
             </div>
@@ -215,6 +214,7 @@
     [Parameter] public EventCallback DeleteEvent { get; set; }
     [Parameter] public EventCallback RecurseDelete { get; set; }
     [Parameter] public EventCallback RemoveLike { get; set; }
+    [Parameter] public HubConnection hub { get; set; }
 
     private bool showReplies = false;
 
@@ -231,7 +231,7 @@
         model = await MainClient.GetReplyModelAsync(message);
         msg = new Message { SenderId = signedInUser.Id, RoomId = message.RoomId };
 
-        elapsed = DateTime.Now.Subtract(model.Message.Date.ToDateTime());
+        elapsed = model.Message.Date.ToDateTime().Subtract(DateTime.Now);
 
         if (elapsed.TotalSeconds < 59)
             time = elapsed.TotalSeconds.ToString("0") + " seconds ago";
@@ -249,66 +249,65 @@
         render = true;
         StateHasChanged();
 
-        signalr.hub.On<Message>("RemovedReply", (msg) =>
+        hub.On<Message>("DeletedReply", async (msg) =>
         {
             if (message.MessageId == msg.MessageId)
             {
-                var m = model.Messages.Where(x => x.MessageId == msg.MessageId).FirstOrDefault();
-                model.Messages.Remove(m);
-                StateHasChanged();
+                model.Messages.Remove(msg);
+                await InvokeAsync(StateHasChanged);
 
-                DeleteEvent.InvokeAsync();
-                RecurseDelete.InvokeAsync();
+                await DeleteEvent.InvokeAsync();
+                await RecurseDelete.InvokeAsync();
             }
         });
 
-        signalr.hub.On<Like>("Liked", (like) =>
+        hub.On<Like>("Liked", async (like) =>
         {
             if (like.MessageId == message.MessageId)
             {
                 model.Likes.Add(like);
                 if(model.Like.UserId == like.UserId)
                     model.Like = like;
-                StateHasChanged();
+                await InvokeAsync(StateHasChanged);
             }
         });
 
-        signalr.hub.On<Like>("UnLiked", (like) =>
+        hub.On<Like>("UnLiked", async (like) =>
         {
             if (like.MessageId == message.MessageId)
             {
                 model.Likes.Remove(model.Likes.Where(x => x.LikeId == like.LikeId).FirstOrDefault());
-                StateHasChanged();
+                await InvokeAsync(StateHasChanged);
             }
         });
 
-        signalr.hub.On<Message, string>("Replied", (msg, msgOn) =>
+        hub.On<Message, string>("Replied", async (msg, msgOn) =>
         {
-            if (msg.MessageId == msgOn)
+            if (model.Message.MessageId == msgOn)
             {
                 model.Messages.Add(msg);
-                StateHasChanged();
+                await InvokeAsync(StateHasChanged);
             }
         });
 
-        await signalr.hub.SendAsync("ConnectMessage", message.MessageId);
+        await hub.SendAsync("ConnectMessage", message.MessageId);
     }
 
     private async Task Reply()
     {
         if (!string.IsNullOrWhiteSpace(msg.SenderId))
         {
-            await signalr.hub.SendAsync("Reply", msg, message);
+            await hub.SendAsync("Reply", msg, message);
 
             msg = new Message { SenderId = signedInUser.Id, RoomId = message.RoomId };
             dReply = false;
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
     }
 
     async void IDisposable.Dispose()
     {
-        if (signalr.hub.State == HubConnectionState.Connected)
-            await signalr.hub.SendAsync("DisconnectMessage", message.MessageId);
+        if (hub.State == HubConnectionState.Connected)
+            await hub.SendAsync("DisconnectMessage", message.MessageId);
     }
 }

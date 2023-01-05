@@ -33,7 +33,7 @@ namespace lumine8.Client.Identity
                 {
                     await authService.InitializeAuthenticate();
 
-                    var cred = Path.Combine(path, "Current.l8");
+                    var cred = Path.Combine(path, "Current.json");
                     File.WriteAllText(cred, JsonConvert.SerializeObject(loginUser));
 
                     return authService.isAuthenticated;
@@ -48,19 +48,13 @@ namespace lumine8.Client.Identity
         {
             if (loginUser != null)
             {
-                if (response != null)
-                {
-                    loginUser.Mnemonic = response.Mnemonic;
-                    loginUser.PrivateKey = response.PrivateKey;
-                }
-
                 var b = await MainClient.AuthenticateAsync(loginUser);
 
                 if (b.IsAuthenticated)
                 {
-                    var key = Path.Combine(path, loginUser.Username, "Key.l8");
+                    var key = Path.Combine(path, loginUser.Username, "Key.json");
                     var dir = Path.Combine(path, loginUser.Username);
-                    var cred = Path.Combine(path, "Current.l8");
+                    var cred = Path.Combine(path, "Current.json");
 
                     if (!Directory.Exists(dir))
                     {
@@ -68,12 +62,10 @@ namespace lumine8.Client.Identity
                         using (FileStream fs = File.Create(key)) { }
                     }
 
-                    loginUser.Mnemonic = string.Empty;
-                    loginUser.PrivateKey = string.Empty;
                     File.WriteAllText(cred, JsonConvert.SerializeObject(loginUser));
 
-                    CAes aes = new CAes(loginUser.Username, loginUser.Password);
-                    byte[] encrypt = aes.Encrypt(JsonConvert.SerializeObject(new KeyFile { PrivateKey = response.PrivateKey, Mnemonic = response.Mnemonic }), aes.iv, aes.key);
+                    CAes aes = new CAes(loginUser.Password, loginUser.PrivateKey);
+                    byte[] encrypt = aes.Encrypt(JsonConvert.SerializeObject(new KeyFile { Password = loginUser.Password, PrivateKey = loginUser.PrivateKey }), aes.iv, aes.key);
                     File.WriteAllBytes(key, encrypt);
 
                     await authService.InitializeAuthenticate();
@@ -88,8 +80,8 @@ namespace lumine8.Client.Identity
 
         public async Task SignOut(LoginUser loginUser)
         {
-            if (File.Exists(Path.Combine(path, "Current.l8")))
-                File.Delete(Path.Combine(path, "Current.l8"));
+            if (File.Exists(Path.Combine(path, "Current.json")))
+                File.Delete(Path.Combine(path, "Current.json"));
 
             this.loginUser = new();
 
@@ -99,22 +91,22 @@ namespace lumine8.Client.Identity
 
         public async Task<bool> SwitchAccountAsync(LoginUser loginUser)
         {
-            var current = Path.Combine(path, "Current.l8");
+            var current = Path.Combine(path, "Current.json");
 
             if (!File.Exists(current))
                 File.Create(current);
 
             CAes aes = new CAes(loginUser.Username, loginUser.Password);
-            var f = aes.Decrypt(File.ReadAllBytes(Path.Combine(path, loginUser.Username, "Key.l8")), aes.ConvertStringToKeyOrIV(loginUser.Username), aes.ConvertStringToKeyOrIV(loginUser.Password));
+            var f = aes.Decrypt(File.ReadAllBytes(Path.Combine(path, loginUser.Username, "Key.json")), aes.ConvertStringToKeyOrIV(loginUser.Username), aes.ConvertStringToKeyOrIV(loginUser.Password));
 
             var key = JsonConvert.DeserializeObject<KeyFile>(f);
-            loginUser.Mnemonic = key.Mnemonic;
+            loginUser.Password = key.Password;
             loginUser.PrivateKey = key.PrivateKey;
 
             var b = await SignInAsync(loginUser);
             if (b)
             {
-                loginUser.Mnemonic = string.Empty;
+                loginUser.Password = string.Empty;
                 loginUser.PrivateKey = string.Empty;
                 File.WriteAllText(current, JsonConvert.SerializeObject(loginUser));
             }

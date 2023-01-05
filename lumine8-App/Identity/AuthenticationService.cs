@@ -17,7 +17,7 @@ namespace lumine8.Client.Identity
         }
 
         public bool isAuthenticated { get; private set; } = false;
-        public string Message { get; private set; } = "";
+        public string Message { get; private set; } = string.Empty;
         public LoginUser loginUser { get; private set; } = new();
         public KeyFile keyFile = null;
         string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "lumine8");
@@ -30,11 +30,7 @@ namespace lumine8.Client.Identity
 
         public Task InitializeAuthenticate()
         {
-            //var key = Path.Combine(path, username, "Key.l8");
-            var cred = Path.Combine(path, "Current.l8");
-
-            //if (!File.Exists(key))
-            //    File.Create(key);
+            var cred = Path.Combine(path, "Current.json");
 
             if (!Directory.Exists(path) && OperatingSystem.IsAndroid())
                 Directory.CreateDirectory(path);
@@ -50,17 +46,18 @@ namespace lumine8.Client.Identity
                 loginUser = new();
             else
             {
-                var key = Path.Combine(path, loginUser.Username, "Key.l8");
+                var key = Path.Combine(path, loginUser.Username, "Key.json");
 
                 if (!File.Exists(key))
                     File.Create(key);
 
                 byte[] keyBytes = File.ReadAllBytes(key);
 
-                CAes aes = new CAes(loginUser.Username, loginUser.Password);
+                CAes aes = new CAes(loginUser.Password, loginUser.PrivateKey);
+                var ke = aes.Decrypt(keyBytes, aes.iv, aes.key);
                 keyFile = JsonConvert.DeserializeObject<KeyFile>(aes.Decrypt(keyBytes, aes.iv, aes.key));
+                loginUser.Password = keyFile.Password;
                 loginUser.PrivateKey = keyFile.PrivateKey;
-                loginUser.Mnemonic = keyFile.Mnemonic;
             }
 
             if (loginUser != null && !string.IsNullOrWhiteSpace(loginUser?.Username) && !string.IsNullOrWhiteSpace(loginUser?.PrivateKey))
@@ -71,6 +68,7 @@ namespace lumine8.Client.Identity
                     headers = new()
                     {
                         { "Username", loginUser.Username },
+                        { "Password", loginUser.Password },
                         { "PrivateKey", loginUser.PrivateKey }
                     };
                     isAuthenticated = b.IsAuthenticated;

@@ -2,7 +2,6 @@
 @inject AuthenticationService authService
 @inject NavigationManager navigationManager
 
-@inject SingletonVariables variables
 @inject IJSRuntime JSRuntime
 
 <div @ref="element" class="d-flex flex-column mychatbox-chat mx-2 mt-auto p-2">
@@ -56,10 +55,9 @@
     [Parameter] public SharedUser signedInUser { get; set; }
     [Parameter] public string UserId { get; set; }
     [Parameter] public EventCallback Close { get; set; }
+    [Parameter] public HubConnection chatHub { get; set; }
 
     private ElementReference element, msgsRef, divRef, textRef;
-
-    private HubConnection chatHub;
 
     private bool render = false;
     private bool isWriting = false;
@@ -79,11 +77,6 @@
 
         render = true;
         StateHasChanged();
-
-        chatHub = new HubConnectionBuilder()
-            .WithAutomaticReconnect()
-            .WithUrl(navigationManager.ToAbsoluteUri($"/chathub"))
-            .Build();
 
         chatHub.On<ChatMessage>("MessageReceived", async (msg) =>
         {
@@ -108,9 +101,6 @@
 
         await JSRuntime.InvokeVoidAsync("setChatSize", element);
         await JSRuntime.InvokeVoidAsync("setScroll", msgsRef);
-
-        await chatHub.StartAsync();
-        await chatHub.SendAsync("Connect", signedInUser.Id);
     }
 
     protected override async Task OnParametersSetAsync()

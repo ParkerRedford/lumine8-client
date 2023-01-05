@@ -116,7 +116,7 @@
                     {
                         foreach (var r in rooms.Rooms_)
                         {
-                            <Post room="r" OnClick="Refresh"></Post>
+                            <Post room="r" OnClick="Refresh" hub="hub"></Post>
                             async Task Refresh()
                             {
                                 rooms.Rooms_.Remove(r);
@@ -262,6 +262,8 @@
     private IndexRooms indexRooms = new();
     private IQueryable<Message> Messages;
 
+    HubConnection hub;
+
     private string youid = Guid.NewGuid().ToString(),
     checkid = Guid.NewGuid().ToString(),
     fFriends = Guid.NewGuid().ToString(),
@@ -304,6 +306,11 @@
             navigationManager.NavigateTo("/Register", true);
         else
         {
+            hub = new HubConnectionBuilder()
+            .WithAutomaticReconnect()
+            .WithUrl(navigationManager.ToAbsoluteUri($"{variables.uri}/postreal"))
+            .Build();
+
             index = await MainClient.GetIndexModelAsync(new Empty(), authService.headers);
 
             this.lFriends = index.Friends.ToList();
@@ -321,6 +328,8 @@
                 };
 
             rooms = await MainClient.GetRoomsAsync(indexRooms);
+
+            await hub.StartAsync();
 
             render = true;
             StateHasChanged();
